@@ -39,3 +39,20 @@ This project is intended to be an implementation of best-practices IoT connectio
 to standard routers with ESP-8266 devices, making entry into the IoT cheaper and 
 
 easier for everyone.
+
+
+:: task list::
+
+* set up task list on a virtual taskboard, like scrumy or asana
+
+* enable editing network list (change password, delete network, etc)
+
+* write code for step 2 in implementation
+
+* make webpage for entering SSID/password popup automatically
+
+* figure out/solve security issues
+
+* make interface look better/be easily customizable
+
+* port over to C and roll into NodeMCU software
