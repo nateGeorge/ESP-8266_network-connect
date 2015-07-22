@@ -7,7 +7,7 @@ statusTable["2"] = "wrong password"
 statusTable["3"] = "didn\'t find the network you specified"
 statusTable["4"] = "failed to connect"
 
-wifi.setmode(1) -- equivalent to wifi.STATION I think...will have to check
+wifi.setmode(wifi.STATION) -- equivalent to wifi.STATION I think...will have to check
 
 --checks if any of the saved SSIDs with passwords (in 'networks' file) are available and tries to connect to them
 function checkSavedNets()
