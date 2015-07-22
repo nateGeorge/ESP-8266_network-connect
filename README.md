@@ -1,8 +1,8 @@
-# ESP-8266_network-setup
+# **ESP-8266_network-connect** ## 
 convenient package for connecting to wifi networks with ESP8266 devices
 
 
-::implementation::
+#implementation
 
 
 The idea is to minimize the work required to connect an ESP8266 device to a router.
@@ -17,7 +17,7 @@ Step 2:  Power on another/other ESP-8266 device(s).  Press a button on the first
 
 
 
-::goal of the project::
+#goal of the project
 
 I want to make the IoT cheaper and easier for all.
 
@@ -41,7 +41,7 @@ to standard routers with ESP-8266 devices, making entry into the IoT cheaper and
 easier for everyone.
 
 
-:: task list::
+#task list
 
 * set up task list on a virtual taskboard, like scrumy or asana
 
