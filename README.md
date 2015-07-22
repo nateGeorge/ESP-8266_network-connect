@@ -9,11 +9,11 @@ The idea is to minimize the work required to connect an ESP8266 device to a rout
 
 Step 1:  Power on the first ESP-8266 device.  Connect to the webserver it creates, and enter 
 
-         SSID/password for the router.
+SSID/password for the router.
 
 Step 2:  Power on another/other ESP-8266 device(s).  Press a button on the first device, and 
 
-         voila -- the other device(s) is/are connected.
+voila -- the other device(s) is/are connected.
 
 
 
