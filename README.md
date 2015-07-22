@@ -1,4 +1,4 @@
-# **ESP-8266_network-connect** ## 
+# **ESP-8266_network-connect**
 convenient package for connecting to wifi networks with ESP8266 devices
 
 
