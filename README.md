@@ -43,6 +43,8 @@ easier for everyone.
 
 #task list
 
+* comment code up more for readability
+
 * set up task list on a virtual taskboard, like scrumy or asana
 
 * enable editing network list (change password, delete network, etc)
