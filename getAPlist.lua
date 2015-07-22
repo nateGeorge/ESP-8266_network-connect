@@ -1,3 +1,13 @@
+--this retrieves a list of the nearby networks and saves it in a file
+--so it doesn't have to be done everytime you want to get a list of nearby networks
+--seems to be a problem with releasing memory:
+--testing on NodeMCU devkit shows
+--before running, first time: heap = 34416
+--first print(node.heap()) = 31512
+--second one = 31552
+--after running: 34160
+--second time: 31632, 31672, 34160, so it returns to the same free memory after running once
+
 wifi.setmode(1)
 
 wifi.sta.getap(
@@ -16,8 +26,10 @@ else
         print(k)
         file.writeline(k)
     end
+    file.close('networkList')
     print(node.heap())
     collectgarbage()
+    print(node.heap())
     file.close()
     return
 end
