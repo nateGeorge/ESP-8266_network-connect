@@ -8,11 +8,9 @@ convenient package for connecting to wifi networks with ESP8266 devices
 The idea is to minimize the work required to connect an ESP8266 device to a router.
 
 Step 1:  Power on the first ESP-8266 device.  Connect to the webserver it creates, and enter 
-
 SSID/password for the router.
 
 Step 2:  Power on another/other ESP-8266 device(s).  Press a button on the first device, and 
-
 voila -- the other device(s) is/are connected.
 
 
@@ -24,7 +22,6 @@ I want to make the IoT cheaper and easier for all.
 
 
 There are many IoT companies and devices out there popping up.  One flaw I see with them 
-
 is that they usually require purchase of a 'hub' device that makes connection to the 
 
 network easy, and may do some of the controlling of the devices.  These hubs normally cost 
