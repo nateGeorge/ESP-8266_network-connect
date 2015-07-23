@@ -1,5 +1,5 @@
---this file must be compiled to run properly, otherwise you will 
---probably run out of memory as I did
+--works using least memory if compiled, otherwise you may 
+--run out of memory
 
 local SSID = nil
 local pass = nil
@@ -62,8 +62,6 @@ conn:on("receive", function(client,request)
 
     print(request)
     local buf = "";
-    print(SSID)
-    print(pass)
 
     --if password for network is nothing, any password should work
     if (SSID~=nil) then
@@ -81,7 +79,6 @@ conn:on("receive", function(client,request)
     buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
     buf = buf.."<p><u><b>1. choose network:</u></b><br>"
     client:send(buf)
-    print('first send')
     buf = ""
     --send network names one at a time; if there are lots of networks the ESP can run out of memory
     for i,network in pairs(SSIDs) do
