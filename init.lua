@@ -1,7 +1,7 @@
 currentDust = {}
 wifi.setmode(1)
 
-dofile('getAPlist.lc')
+dofile('getAPlist.lua')
 
 tmr.alarm(1,5000,1,function ()
     local wifiStat = wifi.sta.status()
@@ -11,7 +11,7 @@ tmr.alarm(1,5000,1,function ()
     end
     if (wifiStat ~=5 and file.open('networks')) then
         file.close('networks')
-        dofile('tryConnect.lc')
+        dofile('tryConnect.lua')
         wifi.sleeptype(1)
     end
 end)
