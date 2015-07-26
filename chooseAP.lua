@@ -54,6 +54,8 @@ conn:on("receive", function(client,request)
         if (string.len(pass)<8) then
             local pass = nil
             errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters.<\h2><\center>"
+        else
+            errMsg = nil
         end
     end
     
@@ -116,7 +118,7 @@ conn:on("receive", function(client,request)
     buf = buf.."<br><br><br><form method=\"GET\"><input type=\"submit\" value=\"edit saved network info\"></form></html>"
     if(not connecting) then
         sendHeader()
-        sendForm()
+        sendForm(errMsg)
         client:send(buf)
         buf = ""
         client:close()
@@ -135,12 +137,14 @@ end)
 function sendHeader()
     -- write header to client
     -- had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices...surely a more elegant way to do it
+    buf = ""
     buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
     client:send(buf)
     buf = ""
 end
 
-function sendForm()
+function sendForm(errMsg)
+    buf = ""
     -- send top of form to client
     buf = buf.."<h1>choose a network to join</h1>";
     buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
