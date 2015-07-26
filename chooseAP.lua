@@ -79,9 +79,11 @@ conn:on("receive", function(client,request)
     if (SSID~=nil) then
         local connectStatus = wifi.sta.status()
         print(connectStatus)
+        sendHeader()
         tmr.alarm(5,500,0,function()
             buf = buf.."<h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID).."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2>"
             client:send(buf)
+            client:close()
             buf = ""
         end)
         tmr.alarm(1,1000,1, function()
@@ -91,6 +93,7 @@ conn:on("receive", function(client,request)
                 print("connectStatus = "..tostring(connectStatus))
                 buf = buf.."<br><center>"
                 if (connectStatus == 5) then
+                    sendHeader()
                     buf = buf.."<h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!</h2><br><h2>Added to network list.</h2><br><h2>Resetting module and connecting to the mystical network...</h1>"
                     file.open("networks","a+")
                     file.writeline(tostring(SSID))
@@ -98,6 +101,7 @@ conn:on("receive", function(client,request)
                     file.close()
                     savedNetwork = true
                 else
+                    sendHeader()
                     buf = buf.."<h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br>"
                 end
                 buf = buf.."</center>"
@@ -108,14 +112,11 @@ conn:on("receive", function(client,request)
             end
         end)
     end
-    -- add warning about password<8 characters if needed
-    if (errMsg~=nil) then
-        buf = buf.."<br><br>"..errMsg
-        errMsg = nil
-    end
     -- TO-DO: need to add the functionality for this button
     buf = buf.."<br><br><br><form method=\"GET\"><input type=\"submit\" value=\"edit saved network info\"></form></html>"
     if(not connecting) then
+        sendHeader()
+        sendForm()
         client:send(buf)
         buf = ""
         client:close()
@@ -158,4 +159,9 @@ function sendForm()
     buf = buf.."</p></form></div>";
     client:send(buf)
     buf = ""
+    -- add warning about password<8 characters if needed
+    if (errMsg~=nil) then
+        buf = buf.."<br><br>"..errMsg
+        errMsg = nil
+    end
 end
