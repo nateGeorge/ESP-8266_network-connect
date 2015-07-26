@@ -72,4 +72,9 @@ while (true) do
     counter = counter + 1
     SSIDs[line] = true
 end
-checkSavedNets()
+if file.open('networks','r') then
+  checkSavedNets()
+else
+  dofile('chooseAP.lua')
+  collectgarbage()
+end
