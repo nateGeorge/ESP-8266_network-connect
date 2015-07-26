@@ -75,6 +75,6 @@ end
 if file.open('networks','r') then
   checkSavedNets()
 else
-  dofile('chooseAP.lua')
+  dofile('chooseAP.lc')
   collectgarbage()
 end

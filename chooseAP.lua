@@ -8,21 +8,21 @@ local otherSSID = nil
 local errMsg = nil
 local savedNetwork = false
 local SSIDs = {}
---lookup table for wifi.sta.status()
+-- lookup table for wifi.sta.status()
 local statusTable = {}
---statusTable[0] = "neither connected nor connecting"
---statusTable[1] = "still connecting"
+-- statusTable[0] = "neither connected nor connecting"
+-- statusTable[1] = "still connecting"
 statusTable["2"] = "wrong password"
 statusTable["3"] = "didn\'t find the network you specified"
 statusTable["4"] = "failed to connect"
---statusTable[5] = "successfully connected"
+-- statusTable[5] = "successfully connected"
 
 collectgarbage()
 wifi.setmode(wifi.STATIONAP)
 print('wifi status: '..wifi.sta.status())
 print(node.heap())
 
---opens saved list of nearby networks and puts into SSIDs table
+-- opens saved list of nearby networks and puts into SSIDs table
 file.open('networkList','r')
 local counter = 0
 local line = ""
@@ -35,7 +35,7 @@ end
 
 print(node.heap())
 
---start server running on ESP-8266, usually is IP 192.168.4.1
+-- start server running on ESP-8266, usually is IP 192.168.4.1
 local cfg = {}
 cfg.ssid = "myfi"
 cfg.pwd = "mystical"
@@ -64,7 +64,7 @@ conn:on("receive", function(client,request)
     print(request)
     local buf = "";
 
-    --if password for network is nothing, any password should work
+    -- if password for network is nothing, any password should work
     if (SSID~=nil) then
         if (pass == "") then
             pass = "aaaaaaaa"
@@ -74,14 +74,8 @@ conn:on("receive", function(client,request)
         wifi.sta.connect()
         connecting = true
     end
-
-    --write header to client
-    --had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices...surely a more elegant way to do it
-    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
-    client:send(buf)
-    buf = ""
     
-    --if found SSID in the POST from the client, try connecting
+    -- if found SSID in the POST from the client, try connecting
     if (SSID~=nil) then
         local connectStatus = wifi.sta.status()
         print(connectStatus)
@@ -114,35 +108,17 @@ conn:on("receive", function(client,request)
             end
         end)
     end
-    -- send top of form to client
-    buf = buf.."<h1>choose a network to join</h1>";
-    buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
-    buf = buf.."<p><u><b>1. choose network:</u></b><br>"
-    client:send(buf)
-    buf = ""
-    --send network names one at a time; if there are lots of networks the ESP can run out of memory
-    for i,network in pairs(SSIDs) do
-        buf = "<input type=\"radio\" name=\"SSID\" value=\""..network.."\">"..network.."<br>"
-        client:send(buf)
-        buf = ""
-    end
-    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
-    buf = buf.."<u><b>2. enter password:</u></b><br><input type=\"text\" name=\"password\"><br><br>";
-    buf = buf.."<input type=\"submit\" value=\"Submit\">";
-    buf = buf.."</p></form></div>";
-    client:send(buf)
-    buf = ""
-    --add warning about password<8 characters if needed
+    -- add warning about password<8 characters if needed
     if (errMsg~=nil) then
         buf = buf.."<br><br>"..errMsg
         errMsg = nil
     end
-    --TO-DO: need to add the functionality for this button
+    -- TO-DO: need to add the functionality for this button
     buf = buf.."<br><br><br><form method=\"GET\"><input type=\"submit\" value=\"edit saved network info\"></form></html>"
     if(not connecting) then
         client:send(buf)
         buf = ""
-        --client:close()
+        client:close()
         collectgarbage()
     end
     if(savedNetwork) then
@@ -154,3 +130,32 @@ conn:on("receive", function(client,request)
     end
 end)
 end)
+
+function sendHeader()
+    -- write header to client
+    -- had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices...surely a more elegant way to do it
+    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
+    client:send(buf)
+    buf = ""
+end
+
+function sendForm()
+    -- send top of form to client
+    buf = buf.."<h1>choose a network to join</h1>";
+    buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
+    buf = buf.."<p><u><b>1. choose network:</u></b><br>"
+    client:send(buf)
+    buf = ""
+    -- send network names one at a time; if there are lots of networks the ESP can run out of memory
+    for i,network in pairs(SSIDs) do
+        buf = "<input type=\"radio\" name=\"SSID\" value=\""..network.."\">"..network.."<br>"
+        client:send(buf)
+        buf = ""
+    end
+    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
+    buf = buf.."<u><b>2. enter password:</u></b><br><input type=\"text\" name=\"password\"><br><br>";
+    buf = buf.."<input type=\"submit\" value=\"Submit\">";
+    buf = buf.."</p></form></div>";
+    client:send(buf)
+    buf = ""
+end
