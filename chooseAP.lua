@@ -1,5 +1,6 @@
---works using least memory if compiled, otherwise you may 
---run out of memory
+-- works using least memory if compiled, otherwise you may 
+-- run out of memory and the module will randomly restart and 
+-- drop connections
 
 local SSID = nil
 local pass = nil
@@ -73,35 +74,22 @@ conn:on("receive", function(client,request)
         wifi.sta.connect()
         connecting = true
     end
+
+    --write header to client
     --had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices...surely a more elegant way to do it
-    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:200%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
-    buf = buf.."<h2>choose a network to join</h2>";
-    buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
-    buf = buf.."<p><u><b>1. choose network:</u></b><br>"
+    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
     client:send(buf)
     buf = ""
-    --send network names one at a time; if there are lots of networks the ESP can run out of memory
-    for i,network in pairs(SSIDs) do
-        buf = "<input type=\"radio\" name=\"SSID\" value=\""..network.."\">"..network.."<br>"
-        client:send(buf)
-        buf = ""
-    end
-    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
-    buf = buf.."<u><b>2. enter password:</u></b><br><input type=\"text\" name=\"password\"><br><br>";
-    buf = buf.."<input type=\"submit\" value=\"Submit\">";
-    buf = buf.."</p></form></div>";
-    client:send(buf)
-    buf = ""
-    --add warning about password<8 characters if needed
-    if (errMsg~=nil) then
-        buf = buf.."<br><br>"..errMsg
-        errMsg = nil
-    end
+    
     --if found SSID in the POST from the client, try connecting
     if (SSID~=nil) then
         local connectStatus = wifi.sta.status()
         print(connectStatus)
-        
+        tmr.alarm(5,500,0,function()
+            buf = buf.."<h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID).."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2>"
+            client:send(buf)
+            buf = ""
+        end)
         tmr.alarm(1,1000,1, function()
             connectStatus = wifi.sta.status()
             print("connecting")
@@ -126,16 +114,39 @@ conn:on("receive", function(client,request)
             end
         end)
     end
+    -- send top of form to client
+    buf = buf.."<h1>choose a network to join</h1>";
+    buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
+    buf = buf.."<p><u><b>1. choose network:</u></b><br>"
+    client:send(buf)
+    buf = ""
+    --send network names one at a time; if there are lots of networks the ESP can run out of memory
+    for i,network in pairs(SSIDs) do
+        buf = "<input type=\"radio\" name=\"SSID\" value=\""..network.."\">"..network.."<br>"
+        client:send(buf)
+        buf = ""
+    end
+    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
+    buf = buf.."<u><b>2. enter password:</u></b><br><input type=\"text\" name=\"password\"><br><br>";
+    buf = buf.."<input type=\"submit\" value=\"Submit\">";
+    buf = buf.."</p></form></div>";
+    client:send(buf)
+    buf = ""
+    --add warning about password<8 characters if needed
+    if (errMsg~=nil) then
+        buf = buf.."<br><br>"..errMsg
+        errMsg = nil
+    end
     --TO-DO: need to add the functionality for this button
     buf = buf.."<br><br><br><form method=\"GET\"><input type=\"submit\" value=\"edit saved network info\"></form></html>"
     if(not connecting) then
         client:send(buf)
         buf = ""
-        client:close()
+        --client:close()
         collectgarbage()
     end
     if(savedNetwork) then
-        tmr.alarm(2,6000,0,function()
+        tmr.alarm(2,15000,0,function()
             srv:close()
             node.restart()
             end
