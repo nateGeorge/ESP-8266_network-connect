@@ -8,6 +8,7 @@ local otherSSID = nil
 local errMsg = nil
 local savedNetwork = false
 local SSIDs = {}
+local resetTimer = 15 -- for resetting the module after successfully connecting to chosen network
 -- lookup table for wifi.sta.status()
 local statusTable = {}
 -- statusTable[0] = "neither connected nor connecting"
@@ -41,7 +42,7 @@ cfg.ssid = "myfi"
 cfg.pwd = "mystical"
 wifi.ap.config(cfg)
 cfg = nil
-local srv=net.createServer(net.TCP,30)
+local srv=net.createServer(net.TCP,3000)
 print('connect to this ip on your computer/phone: '..wifi.ap.getip())
 srv:listen(80,function(conn)
 
@@ -79,6 +80,7 @@ conn:on("receive", function(client,request)
     
     -- if found SSID in the POST from the client, try connecting
     if (SSID~=nil) then
+    -- TO-DO: add timout for connection attempt
         local connectStatus = wifi.sta.status()
         print(connectStatus)
         sendHeader(client)
@@ -96,16 +98,25 @@ conn:on("receive", function(client,request)
                 if (connectStatus == 5) then
                     print(node.heap())
                     sendHeader(client)
-                    buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!</h2><br><h2>Added to network list.</h2><br><h2>Resetting module and connecting to the mystical network...</h1></center>"
+                    buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center>"
+                    
+                    client:send(buf)
+                    buf = ""
                     file.open("networks","a+")
                     file.writeline(tostring(SSID))
                     file.writeline(tostring(pass))
                     file.close()
                     print("SSID/pass written to file")
                     savedNetwork = true
+                    tmr.alarm(2,resetTimer*1000,0,function()
+                        srv:close()
+                        node.restart()
+                        end)
                 else
                     sendHeader(client)
                     buf = buf.."<center><h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br></center>"
+                    client:send(buf)
+                    buf = ""
                 end
                 client:send(buf)
                 client:close()
@@ -116,7 +127,10 @@ conn:on("receive", function(client,request)
         end)
     end
     -- TO-DO: need to add the functionality for this button
-    buf = buf.."<br><br><br><form method=\"GET\"><input type=\"submit\" value=\"edit saved network info\"></form></html>"
+    buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
+    buf = buf.."<input type=\"hidden\" name=\"edit\" value=\"editClicked\">"
+    buf = buf.."<input type=\"submit\" value=\"Edit saved network info\" style=\"font-size:30pt\"></form></html>"
+    buf = ""
     if(not connecting) then
         sendHeader(client)
         sendForm(client, errMsg)
@@ -124,13 +138,6 @@ conn:on("receive", function(client,request)
         buf = ""
         client:close()
         collectgarbage()
-    end
-    if(savedNetwork) then
-        tmr.alarm(2,15000,0,function()
-            srv:close()
-            node.restart()
-            end
-        )
     end
 end)
 end)
@@ -147,9 +154,9 @@ end
 function sendForm(client, errMsg)
     buf = ""
     -- send top of form to client
-    buf = buf.."<h1>choose a network to join</h1>";
+    buf = buf.."<center><h1>Choose a network to join:</h1></center>";
     buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
-    buf = buf.."<p><u><b>1. choose network:</u></b><br>"
+    buf = buf.."<p><u><b>1. Choose network:</u></b><br>"
     client:send(buf)
     buf = ""
     -- send network names one at a time; if there are lots of networks the ESP can run out of memory
@@ -159,8 +166,8 @@ function sendForm(client, errMsg)
         buf = ""
     end
     buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
-    buf = buf.."<u><b>2. enter password:</u></b><br><input type=\"text\" name=\"password\"><br><br>";
-    buf = buf.."<input type=\"submit\" value=\"Submit\">";
+    buf = buf.."<u><b>2. Enter password (or blank for none):</u></b><br><input type=\"text\" name=\"password\"><br><br>";
+    buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">";
     buf = buf.."</p></form></div>";
     client:send(buf)
     buf = ""
