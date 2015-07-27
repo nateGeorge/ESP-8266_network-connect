@@ -1,0 +1,25 @@
+wifi.setmode(wifi.SOFTAP)
+local cfg = {}
+cfg.ssid = "myfi"
+cfg.pwd = "mystical"
+wifi.ap.config(cfg)
+local srv=net.createServer(net.TCP, 3000)
+print('connect to \''..cfg.ssid..'\', password \''..cfg.pwd..'\', ip '..wifi.ap.getip())
+cfg = nil
+srv:listen(90,function(conn)
+conn:on("connection",function(client)
+print("conn")
+end)
+conn:on("disconnection",function(client)
+print("discon")
+end)
+conn:on("reconnection",function(client)
+print("recon")
+end)
+conn:on("sent",function(client)
+print("sent")
+end)
+conn:on("receive", function(client,request)
+    print("recieve")
+end)
+end)
