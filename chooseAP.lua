@@ -89,7 +89,6 @@ conn:on("receive", function(client,request)
             print("connecting")
             if (connectStatus ~= 1) then
                 if (connectStatus == 5) then
-                    print(node.heap())
                     sendHeader(client)
                     buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!"
                     buf = buf.."</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center>"
@@ -106,13 +105,14 @@ conn:on("receive", function(client,request)
                         end)
                 else
                     sendHeader(client)
-                    buf = buf.."<center><h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br></center>"
+                    buf = buf.."<center><h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br></center></div>"
                     client:send(buf)
                     buf = ""
                 end
                 client:send(buf)
                 collectgarbage()
                 tmr.stop(1)
+                client:close()
             end
         end)
     end
@@ -122,6 +122,7 @@ conn:on("receive", function(client,request)
         sendForm(client, errMsg)
         client:send(buf)
         buf = ""
+        client:close()
     end
     collectgarbage()
 end)
@@ -156,14 +157,14 @@ function sendForm(client, errMsg)
     buf = buf.."</p></form>"
     client:send(buf)
     buf = ""
-    buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
-    buf = buf.."<input type=\"hidden\" name=\"deleteSaved\" value=\"true\">"
-    buf = buf.."<input type=\"submit\" value=\"Delete saved networks\" style=\"font-size:30pt; color:red\"></form></html></div>"
-    client:send(buf)
-    buf = ""
     -- add warning about password<8 characters if needed
     if (errMsg~=nil) then
         buf = buf.."<br><br>"..errMsg
         client:send(buf)
     end
+    buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
+    buf = buf.."<input type=\"hidden\" name=\"deleteSaved\" value=\"true\">"
+    buf = buf.."<input type=\"submit\" value=\"Delete saved networks\" style=\"font-size:30pt; color:red\"></form></html></div>"
+    client:send(buf)
+    buf = ""
 end
