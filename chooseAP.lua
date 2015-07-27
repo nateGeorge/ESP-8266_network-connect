@@ -42,12 +42,20 @@ cfg.ssid = "myfi"
 cfg.pwd = "mystical"
 wifi.ap.config(cfg)
 cfg = nil
-local srv=net.createServer(net.TCP,3000)
+local srv=net.createServer(net.TCP,30000)
 print('connect to this ip on your computer/phone: '..wifi.ap.getip())
 srv:listen(80,function(conn)
 
 conn:on("receive", function(client,request)
+    -- handle click of "edit networks" button
+    local _, _, editClicked = string.find(request, "edit=editClicked"
+    if (editClicked~=nil) then
+        editNetworks(client)
+    end
+
+    -- check if SSID and password have been submitted
     local connecting = false
+    -- I noticed the strange characters %%0D%%0A appearing after the SSID, so I put them in the string.find
     local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)");
     print(node.heap())
 
@@ -176,4 +184,10 @@ function sendForm(client, errMsg)
         buf = buf.."<br><br>"..errMsg
         errMsg = nil
     end
+end
+
+function editNetworks(client)
+    -- displays page for 
+    sendHeader(client)
+    
 end
