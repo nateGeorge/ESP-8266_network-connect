@@ -49,45 +49,60 @@ srv:listen(80,function(conn)
 conn:on("connection", function(client,request)
     sendHeader(client)
     sendForm(client)
-end
+end)
 conn:on("receive", function(client,request)
-    -- handle click of "edit networks" button
-    local _, _, editClicked = string.find(request, "edit=editClicked")
-    if (editClicked~=nil) then
-        editNetworks(client)
-    end
-
-    -- check if SSID and password have been submitted
-    local connecting = false
-    -- I noticed the strange characters %%0D%%0A appearing after the SSID, so I put them in the string.find
-    local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)")
-    print(node.heap())
-
-    if (pass~=nil and pass~="") then
-        if (string.len(pass)<8) then
-            local pass = nil
-            errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters.<\h2><\center>"
-        else
-            errMsg = nil
+    -- if someone is just visiting the page, it's a GET request,
+    -- otherwise if they're submitting a form it's POST
+    local isPOST = nil
+    _, _, isPOST = string.find(request, "(POST)")
+    if (isPOST~=nil) then
+        -- handle click of "edit networks" button
+        local _, _, editClicked = string.find(request, "(edit=editClicked)")
+        if (editClicked~=nil) then
+            editNetworks(client)
         end
-    end
+        -- handle choice of individual network to edit
+        local _, _, editNetwork = string.find(request, "editSSID=(.+)")
+        if (editNetwork~=nil) then
+            editNetwork(client,editNetwork)
+        end
+        -- go back to "edit networks" page if clicked cancel from individual network edit page
+        local _, _, cancelEdit = string.find(request, "(cancelSingleNetworkEdit)")
+        if (cancelEdit~=nil) then
+            editNetworks(client)
+        end
+        -- check if SSID and password have been submitted
+        local connecting = false
+        -- I noticed the strange characters %%0D%%0A appearing after the SSID, so I put them in the string.find
+        local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)")
+        print(node.heap())
     
-    if (SSID==nil) then
-        _, _, SSID, pass = string.find(request, "SSID=&otherSSID=(.+)%%0D%%0A&password=(.*)")
-    end
-
-    print(request)
-    local buf = "";
-
-    -- if password for network is nothing, any password should work
-    if (SSID~=nil) then
-        if (pass == "") then
-            pass = "aaaaaaaa"
+        if (pass~=nil and pass~="") then
+            if (string.len(pass)<8) then
+                local pass = nil
+                errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters.<\h2><\center>"
+            else
+                errMsg = nil
+            end
         end
-        print(SSID..', '..pass)
-        wifi.sta.config(tostring(SSID),tostring(pass))
-        wifi.sta.connect()
-        connecting = true
+        
+        if (SSID==nil) then
+            _, _, SSID, pass = string.find(request, "SSID=&otherSSID=(.+)%%0D%%0A&password=(.*)")
+        end
+    
+        print(request)
+        local buf = "";
+    
+        -- if password for network is nothing, any password should work
+        if (SSID~=nil) then
+            if (pass == "") then
+                pass = "aaaaaaaa"
+            end
+            print(SSID..', '..pass)
+            wifi.sta.config(tostring(SSID),tostring(pass))
+            wifi.sta.connect()
+            connecting = true
+        end
     end
     
     -- if found SSID in the POST from the client, try connecting
@@ -139,12 +154,8 @@ conn:on("receive", function(client,request)
             end
         end)
     end
-    -- TO-DO: need to add the functionality for this button
-    buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
-    buf = buf.."<input type=\"hidden\" name=\"edit\" value=\"editClicked\">"
-    buf = buf.."<input type=\"submit\" value=\"Edit saved network info\" style=\"font-size:30pt\"></form></html>"
     buf = ""
-    if(not connecting) then
+    if(not connecting and isPOST==nil) then
         sendHeader(client)
         sendForm(client, errMsg)
         client:send(buf)
@@ -186,6 +197,11 @@ function sendForm(client, errMsg)
     buf = buf.."</p></form></div>"
     client:send(buf)
     buf = ""
+    buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
+    buf = buf.."<input type=\"hidden\" name=\"edit\" value=\"editClicked\">"
+    buf = buf.."<input type=\"submit\" value=\"Edit saved network info\" style=\"font-size:30pt\"></form></html>"
+    client:send(buf)
+    buf = ""
     -- add warning about password<8 characters if needed
     if (errMsg~=nil) then
         buf = buf.."<br><br>"..errMsg
@@ -194,7 +210,7 @@ function sendForm(client, errMsg)
 end
 
 function editNetworks(client)
-    -- displays page for 
+    -- displays page for choosing a network to edit
     sendHeader(client)
     buf = "<center><h1>Choose a network to edit:</h1></center>"
     buf = buf.."<form align=\"left\" method=\"POST\" autocomplete=\"off\">"
@@ -206,13 +222,25 @@ function editNetworks(client)
         local ssid = string.sub(line,1,string.len(line)-1) --hack to remove CR/LF
         local line = file.readline() -- skip the password line
         if line == nil then break end -- think this line is unecessary, will have to check
-        buf = "<input type=\"radio\" name=\"SSID\" value=\""..ssid.."\">"..ssid.."<br>"
+        buf = "<input type=\"radio\" name=\"editSSID\" value=\""..ssid.."\">"..ssid.."<br>"
         client:send(buf)
     end
+    buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">"
+    buf = buf.."<input type=\"button\" name=\"cancel\" value=\"cancelNetworkEdit\"> Cancel"
+    -- cancel button automatically takes you back to the main page,
+    -- since that is the default action on "recieve"
 end
 
-function editOneNetwork(client)
+function editNetwork(client,editNetwork)
     -- for editing password or deleting a single network
     sendHeader(client)
-    
+    buf = "<center><h1>Choose a network to edit:</h1></center>"
+    buf = buf.."<form align=\"left\" method=\"POST\" autocomplete=\"off\">"
+    buf = buf.."new password (blank for none): <input type=\"text\" name=\"pass\"><br><br>"
+    buf = buf.."<input type=\"checkbox\" name=\"delete\" value=\"deleteSSID\"> "
+    client:send(buf)
+    buf = buf.."Delete network from saved list"
+    buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">"
+    buf = buf.."<input type=\"button\" name=\"cancel\" value=\"cancelSingleNetworkEdit\"> Cancel"
+    client:send(buf)
 end
