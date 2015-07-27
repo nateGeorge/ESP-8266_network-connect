@@ -1,6 +1,7 @@
+-- this code was inpired by someone else
 -- works using least memory if compiled, otherwise you may 
 -- run out of memory and the module will randomly restart and 
--- drop connections
+-- drop connections often if TCP timeout is low (3s seems to short)
 
 local SSID = nil
 local pass = nil
@@ -45,10 +46,13 @@ cfg = nil
 local srv=net.createServer(net.TCP,30000)
 print('connect to this ip on your computer/phone: '..wifi.ap.getip())
 srv:listen(80,function(conn)
-
+conn:on("connection", function(client,request)
+    sendHeader(client)
+    sendForm(client)
+end
 conn:on("receive", function(client,request)
     -- handle click of "edit networks" button
-    local _, _, editClicked = string.find(request, "edit=editClicked"
+    local _, _, editClicked = string.find(request, "edit=editClicked")
     if (editClicked~=nil) then
         editNetworks(client)
     end
@@ -56,7 +60,7 @@ conn:on("receive", function(client,request)
     -- check if SSID and password have been submitted
     local connecting = false
     -- I noticed the strange characters %%0D%%0A appearing after the SSID, so I put them in the string.find
-    local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)");
+    local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)")
     print(node.heap())
 
     if (pass~=nil and pass~="") then
@@ -69,7 +73,7 @@ conn:on("receive", function(client,request)
     end
     
     if (SSID==nil) then
-        _, _, SSID, pass = string.find(request, "SSID=&otherSSID=(.+)%%0D%%0A&password=(.*)");
+        _, _, SSID, pass = string.find(request, "SSID=&otherSSID=(.+)%%0D%%0A&password=(.*)")
     end
 
     print(request)
@@ -93,7 +97,8 @@ conn:on("receive", function(client,request)
         print(connectStatus)
         sendHeader(client)
         tmr.alarm(5,500,0,function()
-            buf = buf.."<center><h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID).."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center>"
+            buf = buf.."<center><h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID)
+            buf = buf.."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center>"
             client:send(buf)
             client:close()
             buf = ""
@@ -106,8 +111,8 @@ conn:on("receive", function(client,request)
                 if (connectStatus == 5) then
                     print(node.heap())
                     sendHeader(client)
-                    buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center>"
-                    
+                    buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!"
+                    buf = buf.."</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center>"
                     client:send(buf)
                     buf = ""
                     file.open("networks","a+")
@@ -154,7 +159,9 @@ function sendHeader(client)
     -- write header to client
     -- had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices...surely a more elegant way to do it
     buf = ""
-    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} p{font-size:200%; font-family:helvetica}</style></head><div style = \"width:80%; margin: 0 auto\">"
+    buf = buf.."<!DOCTYPE html><html><head><style>h2{font-size:500%; font-family:helvetica} "
+    buf = buf.."p{font-size:200%; font-family:helvetica}</style>"
+    buf = buf.."</head><div style = \"width:80%; margin: 0 auto\">"
     client:send(buf)
     buf = ""
 end
@@ -162,8 +169,8 @@ end
 function sendForm(client, errMsg)
     buf = ""
     -- send top of form to client
-    buf = buf.."<center><h1>Choose a network to join:</h1></center>";
-    buf = buf.."<form  align = \"left\" method=\"POST\" autocomplete=\"off\">";
+    buf = buf.."<center><h1>Choose a network to join:</h1></center>"
+    buf = buf.."<form align=\"left\" method=\"POST\" autocomplete=\"off\">"
     buf = buf.."<p><u><b>1. Choose network:</u></b><br>"
     client:send(buf)
     buf = ""
@@ -173,10 +180,10 @@ function sendForm(client, errMsg)
         client:send(buf)
         buf = ""
     end
-    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>";
-    buf = buf.."<u><b>2. Enter password (or blank for none):</u></b><br><input type=\"text\" name=\"password\"><br><br>";
-    buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">";
-    buf = buf.."</p></form></div>";
+    buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>"
+    buf = buf.."<u><b>2. Enter password (or blank for none):</u></b><br><input type=\"text\" name=\"password\"><br><br>"
+    buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">"
+    buf = buf.."</p></form></div>"
     client:send(buf)
     buf = ""
     -- add warning about password<8 characters if needed
@@ -188,6 +195,24 @@ end
 
 function editNetworks(client)
     -- displays page for 
+    sendHeader(client)
+    buf = "<center><h1>Choose a network to edit:</h1></center>"
+    buf = buf.."<form align=\"left\" method=\"POST\" autocomplete=\"off\">"
+    client:send(buf)
+    file.open('networks','r')
+    while true do
+        local line = file.readline()
+        if line == nil then break end
+        local ssid = string.sub(line,1,string.len(line)-1) --hack to remove CR/LF
+        local line = file.readline() -- skip the password line
+        if line == nil then break end -- think this line is unecessary, will have to check
+        buf = "<input type=\"radio\" name=\"SSID\" value=\""..ssid.."\">"..ssid.."<br>"
+        client:send(buf)
+    end
+end
+
+function editOneNetwork(client)
+    -- for editing password or deleting a single network
     sendHeader(client)
     
 end
