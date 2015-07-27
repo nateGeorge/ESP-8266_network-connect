@@ -23,7 +23,7 @@ print('wifi status: '..wifi.sta.status())
 file.open('networkList','r')
 local counter = 0
 local line = ""
-while (true) do
+while true do
     line = file.readline()
     if line == nil then break end
     counter = counter + 1
@@ -34,23 +34,20 @@ local cfg = {}
 cfg.ssid = "myfi"
 cfg.pwd = "mystical"
 wifi.ap.config(cfg)
-cfg = nil
-local srv=net.createServer(net.TCP, 20000)
+local srv=net.createServer(net.TCP, 300)
 print('connect to \''..cfg.ssid..'\', password \''..cfg.pwd..'\', ip '..wifi.ap.getip())
+cfg = nil
 srv:listen(80,function(conn)
-conn:on("connection", function(client,request)
-    sendHeader(client)
-    sendForm(client)
-end)
 conn:on("receive", function(client,request)
-    -- handle click of "edit networks" button
+    print("recieve")
+    local errMsg = nil
     local _, _, delete = string.find(request, "(deleteSaved=true)")
     if (delete~=nil) then
         file.remove('networks')
+        errMsg = "<center><h2>Saved networks deleted.<\h2><\center>"
     end
     -- check if SSID and password have been submitted
     local connecting = false
-    -- I noticed the strange characters %%0D%%0A appearing after the SSID, so I put them in the string.find
     local _, _, SSID, pass = string.find(request, "SSID=(.+)%%0D%%0A&otherSSID=&password=(.*)")
     print(node.heap())
 
@@ -58,8 +55,6 @@ conn:on("receive", function(client,request)
         if (string.len(pass)<8) then
             local pass = nil
             errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters.<\h2><\center>"
-        else
-            errMsg = nil
         end
     end
     
@@ -71,7 +66,7 @@ conn:on("receive", function(client,request)
     local buf = "";
 
     -- if password for network is nothing, any password should work
-    if (SSID~=nil) then
+    if (SSID~=nil and pass~=nil) then
         if (pass == "") then
             pass = "aaaaaaaa"
         end
@@ -79,19 +74,14 @@ conn:on("receive", function(client,request)
         wifi.sta.config(tostring(SSID),tostring(pass))
         wifi.sta.connect()
         connecting = true
-    end
-    
-    -- if found SSID in the POST from the client, try connecting
-    if (SSID~=nil) then
-    -- TO-DO: add timout for connection attempt
+        -- TO-DO: add timout for connection attempt
         local connectStatus = wifi.sta.status()
         print(connectStatus)
         sendHeader(client)
         tmr.alarm(5,500,0,function()
             buf = buf.."<center><h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID)
-            buf = buf.."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center>"
+            buf = buf.."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center></div>"
             client:send(buf)
-            client:close()
             buf = ""
         end)
         tmr.alarm(1,1000,1, function()
@@ -121,7 +111,6 @@ conn:on("receive", function(client,request)
                     buf = ""
                 end
                 client:send(buf)
-                client:close()
                 collectgarbage()
                 tmr.stop(1)
             end
@@ -133,9 +122,8 @@ conn:on("receive", function(client,request)
         sendForm(client, errMsg)
         client:send(buf)
         buf = ""
-        client:close()
-        collectgarbage()
     end
+    collectgarbage()
 end)
 end)
 
@@ -146,7 +134,6 @@ function sendHeader(client)
     buf = buf.."p{font-size:200%; font-family:helvetica}</style>"
     buf = buf.."</head><div style = \"width:80%; margin: 0 auto\">"
     client:send(buf)
-    buf = ""
 end
 
 function sendForm(client, errMsg)
@@ -166,17 +153,17 @@ function sendForm(client, errMsg)
     buf = buf.."other: <input type=\"text\" name=\"otherSSID\"><br><br>"
     buf = buf.."<u><b>2. Enter password (or blank for none):</u></b><br><input type=\"text\" name=\"password\"><br><br>"
     buf = buf.."<input style=\"font-size:30pt\" type=\"submit\" value=\"Submit\">"
-    buf = buf.."</p></form></div>"
+    buf = buf.."</p></form>"
     client:send(buf)
     buf = ""
     buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
     buf = buf.."<input type=\"hidden\" name=\"deleteSaved\" value=\"true\">"
-    buf = buf.."<input type=\"submit\" value=\"Delete saved networks\" style=\"font-size:30pt; color:red\"></form></html>"
+    buf = buf.."<input type=\"submit\" value=\"Delete saved networks\" style=\"font-size:30pt; color:red\"></form></html></div>"
     client:send(buf)
     buf = ""
     -- add warning about password<8 characters if needed
     if (errMsg~=nil) then
         buf = buf.."<br><br>"..errMsg
-        errMsg = nil
+        client:send(buf)
     end
 end
