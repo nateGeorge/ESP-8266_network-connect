@@ -28,17 +28,11 @@ easier for everyone.
 
 #task list
 
-* comment code up more for readability
-
-* set up task list on a virtual taskboard, like scrumy or asana
-
-* enable editing network list (change password, delete network, etc)
-
 * write code for step 2 in implementation
 
 * make webpage for entering SSID/password popup automatically
 
-* figure out/solve security issues
+* figure out if any/solve security issues
 
 * make interface look better/be easily customizable
 
