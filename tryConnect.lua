@@ -35,9 +35,9 @@ function checkSavedNets()
         end
     end
     print('done with saved networks, found none to connect to')
-    collectgarbage()
     file.close()
-    dofile('chooseAP.lc')
+    collectgarbage()
+    dofile('chooseAP.lua')
 end
 
 --function is called after connection to network is initiated; it 
@@ -72,9 +72,10 @@ while (true) do
     counter = counter + 1
     SSIDs[line] = true
 end
+file.close()
 if file.open('networks','r') then
   checkSavedNets()
 else
-  dofile('chooseAP.lc')
+  dofile('chooseAP.lua')
   collectgarbage()
 end
