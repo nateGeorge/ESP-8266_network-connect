@@ -28,6 +28,8 @@ easier for everyone.
 
 #task list
 
+* figure out why tryConnect.lua is hanging up memory--holds about 6k memory after the file is done
+
 * figure out why chooseAP.lua won't compile..maybe related to why it drops wifi connection sometimes as AP
 
 * put HTML code in files, read files and send to client line-by-line
