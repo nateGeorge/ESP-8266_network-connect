@@ -28,6 +28,10 @@ easier for everyone.
 
 #task list
 
+* figure out why chooseAP.lua won't compile..maybe related to why it drops wifi connection sometimes as AP
+
+* put HTML code in files, read files and send to client line-by-line
+
 * write code for step 2 in implementation
 
 * make webpage for entering SSID/password popup automatically
