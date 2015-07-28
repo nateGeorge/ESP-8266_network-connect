@@ -6,7 +6,7 @@ wifi.ap.config(cfg)
 local srv=net.createServer(net.TCP, 3000)
 print('connect to \''..cfg.ssid..'\', password \''..cfg.pwd..'\', ip '..wifi.ap.getip())
 cfg = nil
-srv:listen(90,function(conn)
+srv:listen(80,function(conn)
 conn:on("connection",function(client)
 print("conn")
 end)
