@@ -15,7 +15,7 @@ statusTable["2"] = "wrong password"
 statusTable["3"] = "didn\'t find the network you specified"
 statusTable["4"] = "failed to connect"
 -- statusTable[5] = "successfully connected"
-
+wifi.sta.disconnect()
 wifi.setmode(wifi.STATIONAP)
 print('wifi status: '..wifi.sta.status())
 
@@ -31,8 +31,8 @@ while true do
 end
 
 local cfg = {}
-cfg.ssid = "myfi"
-cfg.pwd = "mystical"
+cfg.ssid = "mysticalNetwork"
+cfg.pwd = "mystical5000"
 wifi.ap.config(cfg)
 local srv=net.createServer(net.TCP, 300)
 print('connect to \''..cfg.ssid..'\', password \''..cfg.pwd..'\', ip '..wifi.ap.getip())
@@ -71,27 +71,30 @@ conn:on("receive", function(client,request)
             pass = "aaaaaaaa"
         end
         print(SSID..', '..pass)
-        wifi.sta.config(tostring(SSID),tostring(pass))
-        wifi.sta.connect()
-        connecting = true
         -- TO-DO: add timout for connection attempt
         local connectStatus = wifi.sta.status()
         print(connectStatus)
         sendHeader(client)
         tmr.alarm(5,500,0,function()
             buf = buf.."<center><h2 style=\"color:DarkGreen\">Connecting to "..tostring(SSID)
-            buf = buf.."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center></div>"
+            buf = buf.."!</h2><br><h2>Please hold tight, we'll be back to you shortly.</h2></center></div></html>"
             client:send(buf)
             buf = ""
         end)
         tmr.alarm(1,1000,1, function()
+            tmr.alarm(4,1000,0,function()
+                wifi.sta.config(tostring(SSID),tostring(pass))
+                wifi.sta.connect()
+                connecting = true
+            end)
             connectStatus = wifi.sta.status()
             print("connecting")
             if (connectStatus ~= 1) then
                 if (connectStatus == 5) then
+                    print("connected!")
                     sendHeader(client)
                     buf = buf.."<center><h2 style=\"color:DarkGreen\">Successfully connected to "..tostring(SSID).."!"
-                    buf = buf.."</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center>"
+                    buf = buf.."</h2><br><h2>Added to network list.</h2><br><h2>Resetting module in "..resetTimer.."s...</h1></center></div></html>"
                     client:send(buf)
                     buf = ""
                     file.open("networks","a+")
@@ -104,10 +107,12 @@ conn:on("receive", function(client,request)
                         node.restart()
                         end)
                 else
+                    print("couldn't connect")
                     sendHeader(client)
-                    buf = buf.."<center><h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br></center></div>"
+                    buf = buf.."<center><h2 style=\"color:red\">Whoops! Could not connect to "..tostring(SSID)..". "..statusTable[tostring(connectStatus)].."</h2><br></center>"
                     client:send(buf)
                     buf = ""
+                    sendForm(client, errMsg)
                 end
                 client:send(buf)
                 collectgarbage()
@@ -147,7 +152,8 @@ function sendForm(client, errMsg)
     buf = ""
     -- send network names one at a time; if there are lots of networks the ESP can run out of memory
     for i,network in pairs(SSIDs) do
-        buf = "<input type=\"radio\" name=\"SSID\" value=\""..network.."\">"..network.."<br>"
+        netSubSpaces, _ = string.gsub(network, " ", "%%20")
+        buf = "<input type=\"radio\" name=\"SSID\" value=\""..netSubSpaces.."\">"..network.."<br>"
         client:send(buf)
         buf = ""
     end
@@ -164,7 +170,7 @@ function sendForm(client, errMsg)
     end
     buf = buf.."<br><br><br><form align=\"center\" method=\"POST\">"
     buf = buf.."<input type=\"hidden\" name=\"deleteSaved\" value=\"true\">"
-    buf = buf.."<input type=\"submit\" value=\"Delete saved networks\" style=\"font-size:30pt; color:red\"></form></html></div>"
+    buf = buf.."<input type=\"submit\" value=\"Delete all saved networks\" style=\"font-size:30pt; color:red\"></form></html></div>"
     client:send(buf)
     buf = ""
 end
