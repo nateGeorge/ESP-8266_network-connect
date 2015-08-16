@@ -27,9 +27,7 @@ else
         file.writeline(k)
     end
     file.close('networkList')
-    print(node.heap())
     collectgarbage()
-    print(node.heap())
     file.close()
     return
 end
