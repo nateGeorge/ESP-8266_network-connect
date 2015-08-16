@@ -4,14 +4,14 @@ local SSIDs = {}
 --lookup table for statuses from wifi.sta.status()
 local statusTable = {}
 statusTable["2"] = "wrong password"
-statusTable["3"] = "didn\'t find the network you specified"
+statusTable["3"] = "didn\"t find the network you specified"
 statusTable["4"] = "failed to connect"
 
 wifi.setmode(wifi.STATION) -- equivalent to wifi.STATION I think...will have to check
 
---checks if any of the saved SSIDs with passwords (in 'networks' file) are available and tries to connect to them
+--checks if any of the saved SSIDs with passwords (in "networks" file) are available and tries to connect to them
 function checkSavedNets()
-    file.open('networks','r')
+    file.open("networks","r")
     while true do
         local line = file.readline()
         if line == nil then break end
@@ -19,10 +19,10 @@ function checkSavedNets()
         local line = file.readline()
         if line == nil then break end -- think this line is unecessary, will have to check
         local pass = string.sub(line,1,string.len(line)-1)
-        print(ssid..', '..pass)
+        print(ssid..", "..pass)
         print(SSIDs[ssid])
         if (SSIDs[ssid] == true) then --if saved network is is the list of nearby networks
-            print('connecting to: '..ssid)
+            print("connecting to: "..ssid)
             wifi.sta.config(ssid,pass)
             wifi.sta.connect()
             SSIDs[ssid] = nil
@@ -31,13 +31,13 @@ function checkSavedNets()
             return
         else
             SSIDs[ssid] = nil
-            print('removing: '..ssid..', because it\'s not in saved networks')
+            print("removing: "..ssid..", because it\"s not in saved networks")
         end
     end
-    print('done with saved networks, found none to connect to')
+    print("done with saved networks, found none to connect to")
     file.close()
     collectgarbage()
-    dofile('chooseAP.lua')
+    dofile("chooseAP.lua")
 end
 
 --function is called after connection to network is initiated; it 
@@ -61,7 +61,7 @@ function checkConn()
 end
 
 --gets a table of the SSIDs/
-file.open('networkList','r')
+file.open("networkList","r")
 local counter = 0
 local line = ""
 while (true) do
@@ -73,9 +73,9 @@ while (true) do
     SSIDs[line] = true
 end
 file.close()
-if file.open('networks','r') then
+if file.open("networks","r") then
   checkSavedNets()
 else
-  dofile('chooseAP.lua')
+  dofile("chooseAP.lua")
   collectgarbage()
 end

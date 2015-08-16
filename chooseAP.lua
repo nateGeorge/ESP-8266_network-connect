@@ -129,7 +129,7 @@ function sendWebpage(client, pageFile)
     line = string.sub(line,1,string.len(line)-1) --hack to remove CR/LF
     while (line~=nul) do
         client:send(line)
-        if line == "<div style = \"width:80%; margin: 0 auto\">" do
+        if (line == "<div style = \"width:80%; margin: 0 auto\">") do
             -- add warning about password<8 characters if needed
             if (errMsg~=nil) then
                 buf = buf.."<br><br>"..errMsg

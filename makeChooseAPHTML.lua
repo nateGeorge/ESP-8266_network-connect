@@ -11,7 +11,7 @@ while true do
 end
 
 -- writes html file up to part with network names
-file.open('chooseAP.html')
+file.open("chooseAP.html","w")
 file.writeline("<!DOCTYPE html>")
 file.writeline("<html>")
 file.writeline("<head>")
