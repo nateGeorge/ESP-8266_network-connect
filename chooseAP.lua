@@ -23,6 +23,14 @@ wifi.sta.disconnect()
 wifi.setmode(wifi.STATIONAP)
 print('wifi status: '..wifi.sta.status())
 
+function url_decode(str)
+  str = string.gsub (str, "+", " ")
+  str = string.gsub (str, "%%(%x%x)",
+      function(h) return string.char(tonumber(h,16)) end)
+  str = string.gsub (str, "\r\n", "\n")
+  return str
+end
+
 local cfg = {}
 cfg.ssid = "mysticalNetwork"
 cfg.pwd = "mystical5000"
@@ -47,7 +55,7 @@ conn:on("receive", function(client,request)
     if (pass~=nil and pass~="") then
         if (string.len(pass)<8) then
             local pass = nil
-            errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters.<\h2><\center>"
+            errMsg = "<center><h2 style=\"color:red\">Whoops! Password must be at least 8 characters, or blank.<\h2><\center>"
         end
     end
     
@@ -63,6 +71,8 @@ conn:on("receive", function(client,request)
         if (pass == "") then
             pass = "aaaaaaaa"
         end
+        SSID = url_decode(SSID)
+        pass = url_decode(pass)
         print(SSID..', '..pass)
         -- TO-DO: add timeout for connection attempt
         local connectStatus = wifi.sta.status()
