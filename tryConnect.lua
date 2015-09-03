@@ -2,10 +2,10 @@ local networks = {}
 local networkCount = 0
 local SSIDs = {}
 --lookup table for statuses from wifi.sta.status()
-local statusTable = {}
-statusTable["2"] = "wrong password"
-statusTable["3"] = "didn\"t find the network you specified"
-statusTable["4"] = "failed to connect"
+local statusTable = {};
+statusTable["2"] = "wrong password";
+statusTable["3"] = "didn\"t find the network you specified";
+statusTable["4"] = "failed to connect";
 
 wifi.setmode(wifi.STATION) -- equivalent to wifi.STATION I think...will have to check
 
@@ -37,7 +37,7 @@ function checkSavedNets()
     print("done with saved networks, found none to connect to")
     file.close()
     collectgarbage()
-    dofile("chooseAP.lua")
+    dofile("chooseAP.lc")
 end
 
 --function is called after connection to network is initiated; it 
@@ -76,6 +76,6 @@ file.close()
 if file.open("networks","r") then
   checkSavedNets()
 else
-  dofile("chooseAP.lua")
+  dofile("chooseAP.lc")
   collectgarbage()
 end
