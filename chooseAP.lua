@@ -1,5 +1,7 @@
 --TODO: make the chooseAPHTML a package, so the errmsg can be passed
 --add delay before trying to connect?
+--incorporate this package: https://github.com/reischle/CaptiveIntraweb
+--show status of connection on webpage
 
 -- had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices
 -- surely a more elegant way to do it
