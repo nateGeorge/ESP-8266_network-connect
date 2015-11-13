@@ -6,7 +6,7 @@ convenient package for connecting to wifi networks with ESP8266 devices
 
 The idea is to minimize the work required to connect an ESP8266 device to a router.
 
-Step 1:  Power on the first ESP-8266 device.  Connect to the webserver it creates, and enter 
+Step 1:  Power on the first ESP-8266 device.  Connect to the webserver it creates, navigate to 192.168.4.1 and enter 
 SSID/password for the router.
 
 Step 2:  Power on another/other ESP-8266 device(s).  Press a button on the first device, and 

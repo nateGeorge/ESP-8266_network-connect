@@ -6,6 +6,8 @@
 -- had to chunk up sending of webpage, to deal with low amounts of memory on ESP-8266 devices
 -- surely a more elegant way to do it
 
+-- creates web server running at 192.168.4.1
+
 dofile("makeChooseAPHTML.lua")
 local SSID = nil
 local pass = nil
